@@ -1,0 +1,114 @@
+
+```{r}
+x <- c(1, 3, 2, 5)
+x
+```
+
+```{r}
+x <- c(1, 6, 2)
+y <- c(1, 4, 3)
+length(x) == length(y)
+```
+
+```{r}
+x + y
+```
+
+```{r}
+ls()
+```
+
+```{r}
+rm(x, y)
+ls()
+```
+
+```{r}
+rm(list = ls())
+```
+
+```{r}
+?matrix
+```
+
+```{r}
+x <- matrix(data = c(1, 2, 3, 4), nrow = 2, ncol = 2)
+x
+```
+
+```{r}
+x <- matrix(data = c(1, 2, 3, 4), 2, 2)
+x
+```
+
+```{r}
+matrix(data = c(1, 2, 3, 4), 2, 2, byrow = TRUE)
+```
+
+```{r}
+sqrt(x)
+x^2
+```
+
+```{r}
+x <- rnorm(50)
+y <- x + rnorm(50, mean = 50, sd = .1)
+cor(x, y)
+```
+
+```{r}
+set.seed(1303)
+rnorm(50)
+```
+
+```{r}
+set.seed(3)
+y <- rnorm(100)
+mean(y)
+var(y)
+sqrt(var(y))
+sd(y)
+```
+
+```{r}
+x <- rnorm(100)
+y <- rnorm(100)
+plot(x, y)
+plot(x, y,
+  xlab = " this is the x - axis ", ylab = " this is the y - axis ",
+  main = " Plot of X vs Y "
+)
+```
+
+```{r}
+pdf("Figure.pdf")
+plot(x, y, col = "green")
+dev.off()
+```
+
+```{r}
+x <- seq(1, 10)
+x
+x <- 1:10
+x
+x <- seq(-pi, pi, length = 50)
+```
+
+```{r}
+y <- x
+f <- outer(x, y, function(x, y) cos(y) / (1 + x^2))
+contour(x, y, f)
+contour(x, y, f, nlevels = 45, add = T)
+fa <- (f - t(f)) / 2
+contour(x, y, fa, nlevels = 15)
+```
+
+```{r}
+image(x, y, fa)
+persp(x, y, fa)
+persp(x, y, fa, theta = 30)
+persp(x, y, fa, theta = 30, phi = 20)
+persp(x, y, fa, theta = 30, phi = 70)
+persp(x, y, fa, theta = 30, phi = 40)
+```
+
