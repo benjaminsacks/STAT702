@@ -1,0 +1,155 @@
+---
+title: "STAT 702 - Homework 2"
+author: "Noah Javadi"
+date: "2025-02-16"
+output: pdf_document
+---
+
+Setup
+```{r setup, include=FALSE}
+#install.packages(c('ISLR2','corrplot'))
+library(ISLR2)
+library(corrplot)
+
+```
+Problem 14
+```{r p14}
+set.seed(1)
+x1 <- runif(100)
+x2 <- 0.5 * x1 + rnorm(100) / 10
+y <- 2 + 2 * x1 + 0.3 * x2 + rnorm(100)
+
+#Correlation and scatterplot
+cor(x1,x2)
+plot(x1,x2)
+
+#Fitting full linear regression model
+lm.p14 <- lm(y ~ x1 + x2)
+summary(lm.p14)
+
+#Fitting simple linear regression model with x1
+lm.x1 <- lm(y ~ x1)
+summary(lm.x1)
+
+#Fitting simple linear regression model with x2
+lm.x2 <- lm(y ~ x2)
+summary(lm.x2)
+
+#Adding new values
+x1 <- c(x1,0.1)
+x2 <- c(x2,0.8)
+y <- c(y,6)
+
+#Plot new variables to determine relationship
+plot(x1,y)
+plot(x2,y)
+
+#Refitting full model
+lm.p14 <- lm(y ~ x1 + x2)
+summary(lm.p14)
+
+#Refitting simple linear regression with x1
+lm.x1 <- lm(y ~ x1)
+summary(lm.x1)
+
+#Refitting simple linear regression with x2
+lm.x2 <- lm(y ~ x2)
+summary(lm.x2)
+```
+a) The regression coefficients are 2 for beta_0, 2 for beta_1, and 0.3 for beta_2.
+b) 0.8424
+c) The model with both x_1 and x_2 show a weak linear relationship to y. beta_hat_0 is 1.91, beta_hat_1 is 1.96, and beta_hat_2 is 0.549. The estimated coefficients should approach the true beta_0, beta_1, and beta_2. For beta_1, we can reject the null hypothesis where beta_1 = 0. For beta_2, we cannot reject the null hypothesis where beta_2 = 0.
+d) This is a similar model to the full model previously analyzed. There is enough evidence to reject the null hypothesis for beta_1 = 0. 
+e) This is a weaker model to the full model previously analyzed. There is not enough evidence to reject the null hypothesis for beta_1 = 0.
+f) The results obtained in c-e do not contradict each other. The correlation between x1 and x2 show that x1 is the main predictor and adding x2 does not add much to describing the variability of y.
+g) We have introduced highly influential points to x1 and x2 which has changed the impact of x2 and the interpretation of each model. The point introduced to x1 is an outlier but not a high leverage point because it has a high residual, but not an extreme x value. Whereas the point introduced to x2 is not an outlier, but a high leverage point because it is in line with expected values, but has a large x value.
+
+Problem 15
+```{r p15}
+#?Boston
+
+#Correlation matrix for all variables against crim
+cor(Boston[-1],Boston$crim)
+
+#Fitting simple linear regressions for each variable against crim
+zn.lm <- lm(crim ~ zn,data = Boston)
+indus.lm <- lm(crim ~ indus,data = Boston)
+chas.lm <- lm(crim ~ chas,data = Boston)
+nox.lm <- lm(crim ~ nox,data = Boston)
+rm.lm <- lm(crim ~ rm,data = Boston)
+age.lm <- lm(crim ~ age,data = Boston)
+dis.lm <- lm(crim ~ dis,data = Boston)
+rad.lm <- lm(crim ~ rad,data = Boston)
+tax.lm <- lm(crim ~ tax,data = Boston)
+ptratio.lm <- lm(crim ~ ptratio,data = Boston)
+lstat.lm <- lm(crim ~ lstat,data = Boston)
+medv.lm <- lm(crim ~ medv,data = Boston)
+
+summary(zn.lm)
+summary(indus.lm)
+summary(chas.lm)
+summary(nox.lm)
+summary(rm.lm)
+summary(age.lm)
+summary(dis.lm)
+summary(rad.lm)
+summary(tax.lm)
+summary(ptratio.lm)
+summary(lstat.lm)
+summary(medv.lm)
+
+#Plots to confirm observations and linear relationships for each model against crim
+plot(Boston[c(2:7)],Boston$crim)
+plot(Boston[c(8:13)],Boston$crim)
+
+#Fitting linear model for crim against all variables in data set
+full.lm <- lm(crim ~ zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + lstat + medv,data = Boston)
+
+#Summary of the full model
+summary(full.lm)
+
+#Plots comparing univariate model coefficients against the full model coefficients
+plot(zn.lm$coefficients[2],full.lm$coefficients[2])
+plot(indus.lm$coefficients[2],full.lm$coefficients[3])
+plot(chas.lm$coefficients[2],full.lm$coefficients[4])
+plot(nox.lm$coefficients[2],full.lm$coefficients[5])
+plot(rm.lm$coefficients[2],full.lm$coefficients[6])
+plot(age.lm$coefficients[2],full.lm$coefficients[7])
+plot(dis.lm$coefficients[2],full.lm$coefficients[8])
+plot(rad.lm$coefficients[2],full.lm$coefficients[9])
+plot(tax.lm$coefficients[2],full.lm$coefficients[10])
+plot(ptratio.lm$coefficients[2],full.lm$coefficients[11])
+plot(lstat.lm$coefficients[2],full.lm$coefficients[12])
+plot(medv.lm$coefficients[2],full.lm$coefficients[13])
+simple.lm.coef <- c(zn.lm$coefficients[2],indus.lm$coefficients[2],chas.lm$coefficients[2],nox.lm$coefficients[2],rm.lm$coefficients[2],age.lm$coefficients[2],dis.lm$coefficients[2],rad.lm$coefficients[2],tax.lm$coefficients[2],ptratio.lm$coefficients[2],lstat.lm$coefficients[2],medv.lm$coefficients[2])
+plot(simple.lm.coef,full.lm$coefficients[-1])
+
+#chas only factor with 2 levels. Fitting nonlinear models against crim
+zn.nlm <- lm(crim ~ poly(zn,3),data = Boston)
+indus.nlm <- lm(crim ~ poly(indus,3),data = Boston)
+nox.nlm <- lm(crim ~ poly(nox,3),data = Boston)
+rm.nlm <- lm(crim ~ poly(rm,3),data = Boston)
+age.nlm <- lm(crim ~ poly(age,3),data = Boston)
+dis.nlm <- lm(crim ~ poly(dis,3),data = Boston)
+rad.nlm <- lm(crim ~ poly(rad,3),data = Boston)
+tax.nlm <- lm(crim ~ poly(tax,3),data = Boston)
+ptratio.nlm <- lm(crim ~ poly(ptratio,3),data = Boston)
+lstat.nlm <- lm(crim ~ poly(lstat,3),data = Boston)
+medv.nlm <- lm(crim ~ poly(medv,3),data = Boston)
+
+summary(zn.nlm)
+summary(indus.nlm)
+summary(nox.nlm)
+summary(rm.nlm)
+summary(age.nlm)
+summary(dis.nlm)
+summary(rad.nlm)
+summary(tax.nlm)
+summary(ptratio.nlm)
+summary(lstat.nlm)
+summary(medv.nlm)
+```
+a) For chas (which is a binary variable), there is no linear relationship. However, for the remaining continuous variables there appears to be some weak linear relationships (as supported by the correlation column as well). The rad variable has the strongest linear relationship to crim and from the p-values chas is the only variable that we cannot reject the null hypothesis of beta_1 = 0.
+b) There is very little increase in variability accounted for by the full model compared to the rad simple linear regression. For the zn, dis, rad, and medv variables we can reject the null hypothesis of beta_j = 0.
+c) The simple linear model for crim and rad is very close to the variability explained by the full model.
+d) There seems to be some nonlinear relationship between rad, tax, and medv and crim, but the remaining models do not seem to have a strong association to crim.
