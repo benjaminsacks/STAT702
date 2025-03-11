@@ -1,0 +1,204 @@
+---
+title: "STAT 702 - Homework 3"
+author: "Noah Javadi"
+date: "2025-03-09"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+##Setup
+```{r setup}
+#install.packages('ISLR2','boot','glmnet','pls')
+library(ISLR2)
+library(boot)
+library(glmnet)
+library(pls)
+
+```
+
+##Problem 5-9
+```{r 5-9}
+#Problem 9a
+u <- mean(Boston$medv)
+u
+
+#Problem 9b
+se1 <- sd(Boston$medv)/sqrt(nrow(Boston))
+se1
+
+#Problem 9c - The bootstrap estimation is very close to the manual calculation from b
+se.fn <- function(Boston, index) {
+  x <- Boston$medv[index]
+  y <- length(index)
+  
+  se <- sd(x)/sqrt(y)
+  se
+}
+se.fn(Boston,1:500)
+
+boot(Boston,se.fn,R=1000)
+
+#Problem 9d - The results from the manual calculation and t.test are very close as well
+CI.u <- c(u - 1.96*boot(Boston,se.fn,R=1000)[[1]],u + 1.96*boot(Boston,se.fn,R=1000)[[1]])
+CI.u
+
+t.test(Boston$medv)
+
+#Problem 9e
+median(Boston$medv)
+
+#Problem 9f - 
+se.fn(Boston,1:quantile(Boston$medv,probs = c(0.5)))
+
+#Problem 9g
+u0.1 <- mean(quantile(Boston$medv),probs = c(0.1))
+u0.1
+
+#Problem 9h - 
+se.fn(Boston,1:quantile(Boston$medv,probs = c(0.1)))
+
+```
+
+
+
+##Problem 6-9
+```{r 6-9}
+
+#Problem 9a
+College.Train <- College[1:388,]
+College.Test <- College[389:777,]
+
+College.Trainy <- sample(1:nrow(College),nrow(College)/2)
+College.Testy <- (-College.Trainy)
+Apps.test <- College$Apps[College.Testy]
+
+#Problem 9b
+model.train <- lm(Apps ~ .,data = College.Train)
+summary(model.train)
+
+#Problem 9c
+grid <- 10^seq(10, -2, length = 388)
+ridge.train <- glmnet(College.Train[,c(3:18)],College.Train$Apps,alpha=0,thresh = 1e-12)
+
+ridge.mod <- glmnet(model.matrix(Apps ~ .,College.Train),College.Trainy,alpha = 0,lambda = grid)
+
+cv.out <- cv.glmnet(model.matrix(Apps ~ .,College.Train),College.Trainy,alpha=0)
+
+bestlam <- cv.out$lambda.min
+
+ridge.pred <- predict(ridge.mod, s=bestlam, newx = model.matrix(Apps ~ .,College.Train))
+#ridge.pred
+
+mean((ridge.pred - College.Trainy)^2)
+
+#Problem 9d
+lasso.train <- glmnet(College.Train[,c(1,3:18)],College.Train$Apps,alpha=1)
+
+lasso.mod <- glmnet(model.matrix(Apps ~ .,College.Train),College.Trainy,alpha = 1,lambda = grid)
+
+cv.out <- cv.glmnet(model.matrix(Apps ~ .,College.Train),College.Trainy,alpha=1)
+
+bestlam <- cv.out$lambda.min
+
+lasso.pred <- predict(lasso.mod, s=bestlam, newx = model.matrix(Apps ~ .,College.Train))
+#lasso.pred
+
+lasso.pred <- predict(lasso.mod, s=bestlam, type = 'coefficients')[1:19,]
+#lasso.pred
+
+mean((lasso.pred - College.Trainy)^2)
+
+#Problem 9e - M = 10
+pcr.fit <- pcr(Apps ~ .,data = College,scale = TRUE, validation = "CV")
+summary(pcr.fit)
+
+pcr.pred <- predict(pcr.fit,College.Test,ncomp = 10)
+#pcr.pred
+
+mean((pcr.pred - Apps.test)^2)
+
+#Problem 9f - M = 10
+pls.fit <- plsr(Apps ~ ., data = College, subset = College.Trainy, scale = TRUE, validation = "CV")
+summary(pls.fit)
+
+pls.pred <- predict(pls.fit,College.Test,ncomp = 10)
+#pcr.pred
+
+mean((pls.pred - Apps.test)^2)
+
+```
+#Problem 9g - It does not seem like we are able to accurately predict the number of college applications received based on the data provided. The MSE squared is quite large for the prediction vs test data. The test errors do seem similar between the 5 approaches.
+
+
+##Problem 6-11
+```{r 6-11}
+#Problem 11a
+#Linear
+Boston.lm <- lm(crim ~ .,data = Boston)
+summary(Boston.lm)
+
+Boston.red.lm <- lm(crim ~ dis + rad + medv + zn, data = Boston)
+summary(Boston.red.lm)
+plot(Boston.red.lm)
+
+#Ridge
+Boston.x <- model.matrix(crim ~ .,Boston)[,-1]
+Boston.y <- Boston$crim
+Boston.lambda <- 10^seq(10, -2, length = 100)
+
+Boston.train <- sample(1:nrow(Boston),nrow(Boston)/2)
+Boston.test <- (-Boston.train)
+Boston.ytest <- Boston.y[Boston.test]
+
+Boston.ridge.mod <- glmnet(Boston.x,Boston.y,alpha = 0,lambda = Boston.lambda)
+predict(Boston.ridge.mod,s=0, type = 'coefficients')
+
+Boston.ridge.mod <- glmnet(Boston.x[Boston.train,], Boston.y[Boston.train], alpha = 0, lambda = Boston.lambda)
+Boston1.cv.out <- cv.glmnet(Boston.x[Boston.train,],Boston.y[Boston.train],alpha=0)
+summary(Boston.ridge.mod)
+
+Boston1.bestlam <- Boston1.cv.out$lambda.min
+
+Boston.ridge.pred <- predict(Boston.ridge.mod,s=Boston1.bestlam,newx = Boston.x[Boston.test,])
+Boston.s.pred <- predict(Boston.lm,newdata = Boston[Boston.test,])
+summary(Boston.ridge.pred)
+summary(Boston$crim)
+
+mean((Boston.s.pred - Boston.ytest)^2)
+
+mean((Boston.ridge.pred - Boston.ytest)^2)
+
+#Lasso
+Boston.lasso.mod <- glmnet(Boston.x[Boston.train,],Boston.y[Boston.train],alpha = 1,lambda = grid)
+plot(Boston.lasso.mod)
+
+Boston2.cv.out <- cv.glmnet(Boston.x[Boston.train,],Boston.y[Boston.train],alpha=1)
+plot(cv.out)
+
+Boston2.bestlam <- Boston2.cv.out$lambda.min
+bestlam
+
+Boston.lasso.pred <- predict(Boston.lasso.mod, s=Boston2.bestlam, newx = Boston.x[Boston.test,])
+#Boston.lasso.pred
+
+mean((Boston.lasso.pred - Boston.ytest)^2)
+
+#PCR
+Boston.pcr.fit <- pcr(crim ~ .,data = Boston,scale = TRUE, validation = "CV")
+summary(Boston.pcr.fit)
+validationplot(Boston.pcr.fit,val.type = "MSEP")
+
+Boston.pcr.pred <- predict(Boston.pcr.fit,Boston.x[Boston.test,],ncomp = 12)
+#Boston.pcr.pred
+
+Boston.pcr.fit1 <- pcr(Boston.y ~ Boston.x,scale = TRUE,ncomp =12)
+summary(Boston.pcr.fit1$fitted.values)
+
+mean((Boston.pcr.pred - Boston.ytest)^2)
+
+```
+#Problem 11b - The PCR model seems to more accurately fit the data and is slightly improved from the linear model. The PCR model also better describes the data based on plots of the Boston crime rate per capita.
+
+#Problem 11c - The PCR model does contain all components of the data set because that is where we achieve the most variability accounted for in Boston crime rate per capita. 
+
